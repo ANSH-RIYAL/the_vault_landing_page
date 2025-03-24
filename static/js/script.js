@@ -245,56 +245,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial data fetch
     fetchSP500Data();
 
-    // Admin Dashboard Elements
-    const adminContainer = document.getElementById('adminContainer');
-    const adminDownloadBtn = document.getElementById('adminDownloadBtn');
-    const adminAuthForm = document.getElementById('adminAuthForm');
-    const adminAuthSubmit = document.getElementById('adminAuthSubmit');
-    const adminPasswordInput = document.getElementById('adminPasswordInput');
-
-    // Initially hide the auth form
-    adminAuthForm.classList.add('hidden');
-
-    // Show auth form when clicking the download button
-    adminDownloadBtn.addEventListener('click', () => {
-        adminAuthForm.classList.remove('hidden');
-        adminContainer.classList.add('hidden');
-    });
-
-    // Handle admin authentication
-    adminAuthSubmit.addEventListener('click', async () => {
-        try {
-            const token = adminPasswordInput.value;
-            
-            // First verify the token by fetching admin stats
-            const response = await fetch('/admin/stats', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                // Store the token in session storage
-                sessionStorage.setItem('adminToken', token);
-                // Redirect to admin page
-                window.location.href = '/admin';
-            } else {
-                alert('Invalid password');
-                // Reset the form
-                adminPasswordInput.value = '';
-                adminAuthForm.classList.add('hidden');
-                adminContainer.classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to login');
-            // Reset the form
-            adminPasswordInput.value = '';
-            adminAuthForm.classList.add('hidden');
-            adminContainer.classList.remove('hidden');
-        }
-    });
+    // Admin Authentication
+    const adminForm = document.getElementById('adminForm');
+    const adminLink = document.getElementById('adminLink');
+    
+    if (adminForm) {
+        adminForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleAdminAuth();
+        });
+    }
+    
+    if (adminLink) {
+        adminLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.open('/admin', '_blank');
+        });
+    }
 });
+
+// Admin Authentication
+function handleAdminAuth() {
+    const password = document.getElementById('adminPassword').value;
+    console.log('Admin auth attempt with password:', password);
+    
+    if (password === ADMIN_PASSWORD) {
+        console.log('Password correct, opening admin page');
+        // Open admin page in new window with password as query parameter
+        const adminUrl = `/admin?password=${encodeURIComponent(password)}`;
+        console.log('Opening URL:', adminUrl);
+        window.open(adminUrl, '_blank');
+        // Reset the form
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminForm').classList.add('hidden');
+    } else {
+        console.log('Invalid password');
+        alert('Invalid password');
+    }
+}
 
 // Admin Stats
 async function fetchAdminStats() {
@@ -379,59 +367,4 @@ async function downloadDatabaseCSV(password) {
         console.error('Error downloading database:', error);
         alert('Failed to download database. Please check the console for details.');
     }
-}
-
-// Admin Authentication
-async function handleAdminAuth() {
-    const password = document.getElementById('adminPassword').value;
-    if (password === ADMIN_PASSWORD) {
-        // Store the token
-        localStorage.setItem('adminToken', ADMIN_PASSWORD);
-        
-        // Navigate to admin page with Authorization header
-        const response = await fetch('/admin', {
-            headers: {
-                'Authorization': `Bearer ${ADMIN_PASSWORD}`
-            }
-        });
-        
-        if (response.ok) {
-            window.location.href = '/admin';
-        } else {
-            alert('Authentication failed');
-        }
-    } else {
-        alert('Invalid password');
-    }
-}
-
-// Add event listener for admin form
-document.getElementById('adminForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    handleAdminAuth();
-});
-
-// Add event listener for admin link
-document.getElementById('adminLink')?.addEventListener('click', async function(e) {
-    e.preventDefault();
-    const adminToken = localStorage.getItem('adminToken');
-    if (adminToken) {
-        // If we have a token, try to access admin page
-        const response = await fetch('/admin', {
-            headers: {
-                'Authorization': `Bearer ${adminToken}`
-            }
-        });
-        
-        if (response.ok) {
-            window.location.href = '/admin';
-        } else {
-            // If token is invalid, show the admin form
-            localStorage.removeItem('adminToken');
-            document.getElementById('adminForm').classList.remove('hidden');
-        }
-    } else {
-        // If no token, show the admin form
-        document.getElementById('adminForm').classList.remove('hidden');
-    }
-}); 
+} 

@@ -1,131 +1,159 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if we have a valid session
-    const token = sessionStorage.getItem('adminToken');
-    if (!token) {
+    // Get the password from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const password = urlParams.get('password');
+    
+    if (!password) {
         window.location.href = '/';
         return;
     }
 
-    // Add authorization header to all fetch requests
-    const headers = {
-        'Authorization': `Bearer ${token}`
-    };
-
-    // Fetch admin stats
-    fetchAdminStats();
+    // Fetch admin stats with password
+    fetch('/admin/stats?password=' + encodeURIComponent(password))
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update total interest
+            document.getElementById('totalInterest').textContent = data.total_interest;
+            
+            // Update total subscribers
+            document.getElementById('totalSubscribers').textContent = data.total_subscribers;
+            
+            // Update recent interest
+            const recentInterestHtml = data.recent_interest.map(item => `
+                <div class="admin-recent-item">
+                    <span class="admin-recent-value">Interest recorded</span>
+                    <span class="admin-recent-timestamp">${formatDate(item.timestamp)}</span>
+                </div>
+            `).join('');
+            document.getElementById('recentInterest').innerHTML = recentInterestHtml;
+            
+            // Update recent subscribers
+            const recentSubscribersHtml = data.recent_subscribers.map(item => `
+                <div class="admin-recent-item">
+                    <span class="admin-recent-value">${item.email}</span>
+                    <span class="admin-recent-timestamp">${formatDate(item.timestamp)}</span>
+                </div>
+            `).join('');
+            document.getElementById('recentSubscribers').innerHTML = recentSubscribersHtml;
+        })
+        .catch(error => {
+            console.error('Error fetching admin stats:', error);
+            document.getElementById('totalInterest').textContent = 'Error loading data';
+            document.getElementById('totalSubscribers').textContent = 'Error loading data';
+            document.getElementById('recentInterest').innerHTML = 'Error loading data';
+            document.getElementById('recentSubscribers').innerHTML = 'Error loading data';
+        });
 
     // Handle logout
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        sessionStorage.removeItem('adminToken');
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
         window.location.href = '/';
     });
 
     // Handle CSV download
-    document.getElementById('downloadCSVBtn').addEventListener('click', () => {
-        downloadDatabaseCSV(token);
+    document.getElementById('downloadCSVBtn')?.addEventListener('click', () => {
+        downloadDatabaseCSV(password);
     });
 });
 
-async function fetchAdminStats() {
+// Utility functions
+function formatDate(timestamp) {
+    return new Date(timestamp).toLocaleString();
+}
+
+// Export CSV
+async function exportCSV() {
     try {
-        const token = sessionStorage.getItem('adminToken');
-        const response = await fetch('/admin/stats', {
+        const adminToken = localStorage.getItem('adminToken');
+        if (!adminToken) {
+            throw new Error('No admin token found');
+        }
+
+        const response = await fetch('/admin/export', {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${adminToken}`
             }
         });
 
         if (!response.ok) {
             if (response.status === 401) {
-                // Unauthorized - redirect to home page
                 window.location.href = '/';
                 return;
             }
-            throw new Error('Failed to fetch admin stats');
+            throw new Error('Failed to export data');
         }
 
-        const data = await response.json();
-        
-        // Update stats
-        document.getElementById('adminTotalInterest').textContent = data.total_interest;
-        document.getElementById('adminUniqueVisitors').textContent = data.unique_visitors;
-        document.getElementById('adminTotalSubscribers').textContent = data.total_subscribers;
-        
-        // Update recent interest
-        const recentInterestDiv = document.getElementById('adminRecentInterest');
-        recentInterestDiv.innerHTML = data.recent_interest.map(item => `
-            <div class="admin-recent-item">
-                <span class="admin-recent-value">${item[0]}</span>
-                <span class="admin-recent-timestamp">${new Date(item[1]).toLocaleString()}</span>
-            </div>
-        `).join('');
-        
-        // Update recent subscribers
-        const recentSubscribersDiv = document.getElementById('adminRecentSubscribers');
-        recentSubscribersDiv.innerHTML = data.recent_subscribers.map(item => `
-            <div class="admin-recent-item">
-                <span class="admin-recent-value">${item[0]}</span>
-                <span class="admin-recent-timestamp">${new Date(item[1]).toLocaleString()}</span>
-            </div>
-        `).join('');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'admin_data.csv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     } catch (error) {
-        console.error('Error fetching admin stats:', error);
-        if (error.message === 'Unauthorized') {
+        console.error('Error exporting data:', error);
+        if (error.message === 'No admin token found') {
             window.location.href = '/';
         }
     }
 }
 
-async function downloadDatabaseCSV(token) {
+// Download database as CSV
+async function downloadDatabaseCSV(password) {
     try {
-        const response = await fetch(`/export-data?password=${encodeURIComponent(token)}`);
+        const response = await fetch(`/admin/download-csv?password=${encodeURIComponent(password)}`);
         if (!response.ok) {
-            if (response.status === 401) {
-                // Unauthorized - redirect to home page
-                window.location.href = '/';
-                return;
-            }
-            throw new Error('Failed to fetch data');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const data = await response.json();
+        // Get the filename from the Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'admin_stats.csv';
+        if (contentDisposition) {
+            const matches = /filename="(.+)"/.exec(contentDisposition);
+            if (matches) {
+                filename = matches[1];
+            }
+        }
         
-        // Create CSV content
-        let csvContent = "data:text/csv;charset=utf-8,";
+        // Create a blob from the response
+        const blob = await response.blob();
         
-        // Add summary section
-        csvContent += "Summary\n";
-        csvContent += "Total Interest,Unique Visitors,Total Subscribers\n";
-        csvContent += `${data.summary.total_interest},${data.summary.unique_visitors},${data.summary.total_subscribers}\n\n`;
-        
-        // Add interest data
-        csvContent += "Interest Data\n";
-        csvContent += "IP Address,Timestamp\n";
-        data.interest_data.forEach(item => {
-            const cleanIP = item.ip_address.replace(/"/g, '""');
-            const cleanTimestamp = item.timestamp.replace(/"/g, '""');
-            csvContent += `"${cleanIP}","${cleanTimestamp}"\n`;
-        });
-        
-        // Add email subscribers
-        csvContent += "\nEmail Subscribers\n";
-        csvContent += "Email,Timestamp\n";
-        data.email_data.forEach(item => {
-            const cleanEmail = item.email.replace(/"/g, '""');
-            const cleanTimestamp = item.timestamp.replace(/"/g, '""');
-            csvContent += `"${cleanEmail}","${cleanTimestamp}"\n`;
-        });
-        
-        // Create download link
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `database_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Create a link element and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     } catch (error) {
-        console.error('Error downloading database:', error);
-        alert('Failed to download database. Please try again.');
+        console.error('Error downloading CSV:', error);
+        alert('Failed to download CSV file');
+    }
+}
+
+// Fetch admin stats
+async function fetchAdminStats() {
+    try {
+        const response = await fetch('/admin/stats?password=isha');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        updateAdminStats(data);
+    } catch (error) {
+        console.error('Error fetching admin stats:', error);
+        document.getElementById('totalInterest').textContent = 'Error loading data';
+        document.getElementById('totalSubscribers').textContent = 'Error loading data';
+        document.getElementById('recentInterest').innerHTML = 'Error loading data';
+        document.getElementById('recentSubscribers').innerHTML = 'Error loading data';
     }
 } 

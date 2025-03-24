@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, Response
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import requests
 import json
@@ -18,6 +19,28 @@ from config import (
     APP_DESCRIPTION,
     APP_EMAIL
 )
+from dotenv import load_dotenv
+import pandas as pd
+import io
+import asyncio
+import aiohttp
+import logging
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Get environment variables
+ALPACA_API_KEY = os.getenv('ALPACA_API_KEY')
+ALPACA_API_SECRET = os.getenv('ALPACA_API_SECRET')
+ALPACA_BASE_URL = os.getenv('ALPACA_BASE_URL')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+
+if not all([ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_BASE_URL, ADMIN_PASSWORD]):
+    raise ValueError("Missing required environment variables")
 
 app = FastAPI(title=APP_NAME, description=APP_DESCRIPTION)
 
@@ -80,8 +103,6 @@ init_db()
 backup_db()
 
 # Security
-ADMIN_PASSWORD = "isha"
-
 async def verify_admin_password(password: str):
     if password != ADMIN_PASSWORD:
         raise HTTPException(
@@ -337,95 +358,154 @@ async def subscribe_email(request: Request):
 @app.get("/admin/stats")
 async def get_admin_stats(request: Request):
     try:
-        # Get the authorization header
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid authorization header"
-            )
+        # Get the password from query parameters
+        password = request.query_params.get('password')
+        print(f"Received password: {password}")  # Debug print
         
-        # Extract the token
-        token = auth_header.split(' ')[1]
+        # If no password provided or password is incorrect, return unauthorized
+        if not password or password != ADMIN_PASSWORD:
+            print("Password verification failed")  # Debug print
+            raise HTTPException(status_code=401, detail="Unauthorized")
         
-        # Verify the token
-        if token != ADMIN_PASSWORD:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token"
-            )
+        print("Password verified successfully")  # Debug print
         
-        # Get database connection
-        conn = sqlite3.connect('app.db')
-        c = conn.cursor()
-        
-        # Get summary statistics
-        c.execute('SELECT COUNT(*) FROM interest_data')
-        total_interest = c.fetchone()[0]
-        
-        c.execute('SELECT COUNT(DISTINCT ip_address) FROM interest_data')
-        unique_visitors = c.fetchone()[0]
-        
-        c.execute('SELECT COUNT(*) FROM email_subscribers')
-        total_subscribers = c.fetchone()[0]
-        
-        # Get recent interest data
-        c.execute('''
-            SELECT ip_address, timestamp 
-            FROM interest_data 
-            ORDER BY timestamp DESC 
-            LIMIT 10
-        ''')
-        recent_interest = c.fetchall()
-        
-        # Get recent subscribers
-        c.execute('''
-            SELECT email, timestamp 
-            FROM email_subscribers 
-            ORDER BY timestamp DESC 
-            LIMIT 10
-        ''')
-        recent_subscribers = c.fetchall()
-        
-        conn.close()
-        
-        return {
-            "total_interest": total_interest,
-            "unique_visitors": unique_visitors,
-            "total_subscribers": total_subscribers,
-            "recent_interest": recent_interest,
-            "recent_subscribers": recent_subscribers
-        }
-    except HTTPException:
-        raise
+        # Get stats from database
+        with sqlite3.connect('app.db') as conn:
+            cursor = conn.cursor()
+            
+            # Get total interest (count of interest entries)
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM interest_data
+            """)
+            total_interest = cursor.fetchone()[0]
+            
+            # Get total subscribers
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM email_subscribers
+            """)
+            total_subscribers = cursor.fetchone()[0]
+            
+            # Get recent interest (last 5)
+            cursor.execute("""
+                SELECT ip_address, timestamp 
+                FROM interest_data 
+                ORDER BY timestamp DESC 
+                LIMIT 5
+            """)
+            recent_interest = [
+                {"amount": 1, "timestamp": timestamp}  # Each interest entry counts as 1
+                for ip_address, timestamp in cursor.fetchall()
+            ]
+            
+            # Get recent subscribers (last 5)
+            cursor.execute("""
+                SELECT email, timestamp 
+                FROM email_subscribers 
+                ORDER BY timestamp DESC 
+                LIMIT 5
+            """)
+            recent_subscribers = [
+                {"email": email, "timestamp": timestamp}
+                for email, timestamp in cursor.fetchall()
+            ]
+            
+            return {
+                "total_interest": total_interest,
+                "total_subscribers": total_subscribers,
+                "recent_interest": recent_interest,
+                "recent_subscribers": recent_subscribers
+            }
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching admin stats: {str(e)}"
-        )
+        print(f"Error in admin stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/admin", response_class=HTMLResponse)
+@app.get("/admin/download-csv")
+async def download_csv(request: Request):
+    try:
+        # Get the password from query parameters
+        password = request.query_params.get('password')
+        print(f"\n=== Download CSV Request Debug ===")
+        print(f"Received password: {password}")
+        print(f"Expected password: {ADMIN_PASSWORD}")
+        
+        # If no password provided or password is incorrect, return unauthorized
+        if not password or password != ADMIN_PASSWORD:
+            print("Password verification failed")
+            raise HTTPException(status_code=401, detail="Unauthorized")
+        
+        print("Password verified successfully")
+        
+        # Get data from database
+        with sqlite3.connect('app.db') as conn:
+            cursor = conn.cursor()
+            
+            # Get interest data
+            cursor.execute("""
+                SELECT ip_address, timestamp 
+                FROM interest_data 
+                ORDER BY timestamp DESC
+            """)
+            interest_data = cursor.fetchall()
+            
+            # Get subscriber data
+            cursor.execute("""
+                SELECT email, timestamp 
+                FROM email_subscribers 
+                ORDER BY timestamp DESC
+            """)
+            subscriber_data = cursor.fetchall()
+            
+            # Create CSV content
+            csv_content = []
+            
+            # Add interest data
+            csv_content.append("Interest Data")
+            csv_content.append("IP Address,Timestamp")
+            for ip, timestamp in interest_data:
+                csv_content.append(f"{ip},{timestamp}")
+            
+            # Add subscriber data
+            csv_content.append("\nSubscriber Data")
+            csv_content.append("Email,Timestamp")
+            for email, timestamp in subscriber_data:
+                csv_content.append(f"{email},{timestamp}")
+            
+            # Join all lines
+            csv_text = "\n".join(csv_content)
+            
+            # Create response with CSV content
+            return Response(
+                content=csv_text,
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": f'attachment; filename="admin_stats_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+                }
+            )
+    except Exception as e:
+        print(f"Error in download CSV: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/admin")
 async def admin_page(request: Request):
     try:
-        # Get the authorization header
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
+        # Get the password from query parameters
+        password = request.query_params.get('password')
+        print(f"\n=== Admin Page Request Debug ===")
+        print(f"Received password: {password}")
+        print(f"Expected password: {ADMIN_PASSWORD}")
+        
+        # If no password provided or password is incorrect, return login page
+        if not password or password != ADMIN_PASSWORD:
+            print("Password verification failed")
             return templates.TemplateResponse(
-                "landing_page.html",
+                "admin_login.html",
                 {"request": request}
             )
         
-        # Extract the token
-        token = auth_header.split(' ')[1]
-        
-        # Verify the token
-        if token != ADMIN_PASSWORD:
-            return templates.TemplateResponse(
-                "landing_page.html",
-                {"request": request}
-            )
-        
-        # If token is valid, show admin page
+        print("Password verified successfully")
+        # If password is correct, show admin page
         return templates.TemplateResponse(
             "admin_page.html",
             {"request": request}
@@ -433,9 +513,30 @@ async def admin_page(request: Request):
     except Exception as e:
         print(f"Error in admin page: {str(e)}")
         return templates.TemplateResponse(
-            "landing_page.html",
+            "admin_login.html",
             {"request": request}
         )
+
+@app.post("/admin")
+async def admin_login(request: Request):
+    try:
+        # Check if password was submitted
+        form_data = await request.form()
+        password = form_data.get("password", "")
+        print(f"Received password: {password}")  # Debug print
+        
+        if password == ADMIN_PASSWORD:
+            print("Password verified successfully")  # Debug print
+            # Password is correct, show admin page
+            return templates.TemplateResponse("admin_page.html", {"request": request})
+        else:
+            print("Password verification failed")  # Debug print
+            # Show login form with error if incorrect password
+            return templates.TemplateResponse("admin_login.html", {"request": request, "error": "Incorrect password"})
+            
+    except Exception as e:
+        print(f"Error in admin_login: {str(e)}")
+        return templates.TemplateResponse("admin_login.html", {"request": request, "error": "An error occurred"})
 
 @app.get("/", response_class=HTMLResponse)
 async def landing_page(request: Request):

@@ -3,54 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - The Vault</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="/static/css/styles.css" rel="stylesheet">
+    <title>Admin Dashboard - NYU Collective Auto Investment</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
 </head>
-<body class="bg-gradient-to-br from-nyu-purple to-nyu-violet min-h-screen">
-    <div class="container mx-auto px-4 py-12">
-        <div class="glass-effect rounded-lg shadow-lg p-8">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-bold text-nyu-purple">Admin Dashboard</h2>
-                <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
-                    Logout
-                </button>
-            </div>
+<body>
+    <div class="container">
+        <header class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <a href="/" class="back-link">Back to Home</a>
+        </header>
 
-            <div class="grid grid-cols-3 gap-4 mb-6">
+        <main class="admin-content">
+            <section class="admin-stats">
                 <div class="admin-stats-card">
-                    <div class="admin-stats-value" id="adminTotalInterest">0</div>
-                    <div class="admin-stats-label">Total Interest</div>
+                    <h2>Total Interest</h2>
+                    <div class="admin-stats-value" id="totalInterest">Loading...</div>
                 </div>
                 <div class="admin-stats-card">
-                    <div class="admin-stats-value" id="adminUniqueVisitors">0</div>
-                    <div class="admin-stats-label">Unique Visitors</div>
+                    <h2>Total Subscribers</h2>
+                    <div class="admin-stats-value" id="totalSubscribers">Loading...</div>
                 </div>
-                <div class="admin-stats-card">
-                    <div class="admin-stats-value" id="adminTotalSubscribers">0</div>
-                    <div class="admin-stats-label">Subscribers</div>
-                </div>
-            </div>
+            </section>
 
-            <div class="grid md:grid-cols-2 gap-4">
+            <section class="admin-recent">
                 <div class="admin-recent-list">
-                    <h4 class="text-lg font-bold mb-4 text-nyu-purple">Recent Interest</h4>
-                    <div id="adminRecentInterest" class="space-y-2"></div>
+                    <h2>Recent Interest</h2>
+                    <div id="recentInterest">Loading...</div>
                 </div>
                 <div class="admin-recent-list">
-                    <h4 class="text-lg font-bold mb-4 text-nyu-purple">Recent Subscribers</h4>
-                    <div id="adminRecentSubscribers" class="space-y-2"></div>
+                    <h2>Recent Subscribers</h2>
+                    <div id="recentSubscribers">Loading...</div>
                 </div>
-            </div>
+            </section>
 
-            <div class="mt-8">
-                <button id="downloadCSVBtn" class="bg-nyu-green text-white px-6 py-2 rounded-lg hover:bg-nyu-green-dark transition-colors">
-                    Download Statistics CSV
-                </button>
+            <div class="admin-actions">
+                <button id="downloadCSVBtn" class="admin-button">Download Statistics</button>
             </div>
-        </div>
+        </main>
     </div>
-
-    <script src="/static/js/admin.js"></script>
+    <script src="{{ url_for('static', path='/js/admin.js') }}"></script>
 </body>
 </html> 
