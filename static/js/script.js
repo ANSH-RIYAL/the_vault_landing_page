@@ -147,27 +147,21 @@ async function fetchSP500Data() {
 }
 
 // WebSocket connection for real-time updates
-let ws = null;
-
 function connectWebSocket() {
-    // Use wss:// for HTTPS and ws:// for HTTP
+    // Determine if we're on HTTPS
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/interest`;
-    console.log('Connecting to WebSocket:', wsUrl);
     
-    ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(wsUrl);
     
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        const interestCountElement = document.getElementById('interestCount');
-        if (interestCountElement) {
-            interestCountElement.textContent = `${data.count} people are interested`;
-        }
+        updateInterestCount(data.count);
     };
     
     ws.onclose = function() {
-        // Try to reconnect after 5 seconds
-        setTimeout(connectWebSocket, 5000);
+        console.log('WebSocket connection closed. Reconnecting...');
+        setTimeout(connectWebSocket, 1000);
     };
 }
 
