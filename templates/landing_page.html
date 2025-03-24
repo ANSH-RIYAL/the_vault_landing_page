@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Vault - NYU's Collective Investment Fund</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-nyu-purple to-nyu-violet min-h-screen">
+    <!-- Hero Section -->
+    <div class="hero-bg text-white py-20">
+        <div class="container mx-auto px-4 text-center relative">
+            <div class="hero-content">
+                <h1 class="text-5xl font-bold mb-4">The Vault</h1>
+                <p class="text-xl mb-8">NYU's Collective Auto-Investment Fund</p>
+                <p class="text-lg mb-8">Join the first student-led automated investment fund. No middleman, no hassle.</p>
+            
+                <!-- Interest Section -->
+                <div class="interest-section mb-8">
+                    <div class="flex flex-col items-center space-y-4">
+                        <button id="interestButton" class="bg-nyu-purple text-white px-8 py-3 rounded-lg hover:bg-nyu-violet transition-colors">
+                            I'm Interested
+                        </button>
+                        <span id="interestCount" class="text-white text-lg">{{ interest_count }} people are interested</span>
+                    </div>
+
+                    <!-- Email Collection Form (Hidden by default) -->
+                    <div id="emailSection" class="hidden mt-6">
+                        <p class="text-gray-200 mb-4">Please enter your email to be notified when we launch:</p>
+                        <form id="subscribeForm" class="flex flex-col items-center space-y-4">
+                            <input type="email" id="emailInput" placeholder="Enter your email" 
+                                   class="email-input px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-nyu-purple text-gray-900">
+                            <button type="submit" class="bg-nyu-green text-white px-6 py-2 rounded-lg hover:bg-nyu-green-dark transition-colors">
+                                Submit
+                            </button>
+                        </form>
+                        <p id="subscribeMessage" class="mt-4 text-nyu-green hidden">
+                            Thank you for your interest! We'll notify you when we launch.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="glass-effect rounded-lg shadow-lg p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-nyu-purple">Why Choose The Vault?</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="feature-card p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-nyu-purple">Automated Investment</h3>
+                    <p>Set it and forget it. Our system automatically invests your money in a diversified portfolio tracking the S&P 500.</p>
+                </div>
+                <div class="feature-card p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-nyu-purple">Low Fees</h3>
+                    <p>No management fees. Only pay the minimal transaction costs required by the exchange.</p>
+                </div>
+                <div class="feature-card p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-nyu-purple">Student-Led</h3>
+                    <p>Managed by NYU students created software, combining academic excellence with practical investment.</p>
+                </div>
+                <div class="feature-card p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-nyu-purple">Transparent</h3>
+                    <p>Full visibility into your investments with real-time tracking and detailed performance reports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- S&P 500 Section -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="glass-effect rounded-lg shadow-lg p-8">
+            <h2 class="text-3xl font-bold mb-6 text-nyu-purple">S&P 500 Performance (Last 12 Months)</h2>
+            <div id="chart-container" class="relative w-4/5 mx-auto">
+                <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
+                    <div class="text-nyu-purple text-lg">Loading chart data...</div>
+                </div>
+                <canvas id="sp500Chart"></canvas>
+            </div>
+
+            <!-- SIP Projection -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <h3 class="text-xl font-bold text-nyu-purple mb-4">SIP Projection</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">1-Year Return Rate:</span>
+                        <span class="text-nyu-green font-semibold" id="sip-returns">Calculating...</span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-4">
+                        <p class="text-gray-700" id="sip-40year-projection">
+                            With <span class="text-nyu-green font-semibold" id="sip-returns-40year">Calculating...</span>% returns, 
+                            if you invest $50 per month ($600 per year) for 40 years, 
+                            you will end up making <span class="text-nyu-purple font-semibold" id="sip-40year-total">Calculating...</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Future Investment Options -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="glass-effect rounded-lg shadow-lg p-8 mb-12">
+            <h2 class="text-3xl font-bold mb-8 text-nyu-purple">Future Investment Options</h2>
+            <p class="text-gray-600 mb-8">Coming soon after reaching 500 interested members:</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="future-option-tech p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-nyu-purple">Popular Funds</h3>
+                    <ul class="space-y-2">
+                        <li>• Growth-focused tech funds</li>
+                        <li>• Emerging market opportunities</li>
+                        <li>• ESG and sustainable investing</li>
+                        <li>• Cryptocurrency exposure</li>
+                    </ul>
+                </div>
+                <div class="future-option-internal p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-nyu-purple">Internally Managed Fund</h3>
+                    <ul class="space-y-2">
+                        <li>• Proprietary investment strategy</li>
+                        <li>• Active portfolio management</li>
+                        <li>• Regular market research</li>
+                        <li>• Risk-adjusted returns</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Section -->
+    <div class="container mx-auto px-4 py-12">
+        <div class="glass-effect rounded-lg shadow-lg p-8">
+            <div id="adminContainer" class="text-center">
+                <button id="adminDownloadBtn" class="bg-nyu-purple text-white px-6 py-2 rounded-lg hover:bg-nyu-violet transition-colors">
+                    Download Statistics
+                </button>
+            </div>
+            
+            <div id="adminAuthForm" class="mb-8 hidden">
+                <div class="max-w-md mx-auto">
+                    <input type="password" id="adminPasswordInput" placeholder="Enter admin password" 
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-nyu-purple text-gray-900">
+                    <button id="adminAuthSubmit" class="mt-4 bg-nyu-green text-white px-6 py-2 rounded-lg hover:bg-nyu-green-dark transition-colors w-full">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with Contact -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-nyu-purple">Contact Us</h3>
+                    <p class="text-gray-400 mb-4">{{ app_description }}</p>
+                    <a href="mailto:{{ app_email }}" class="text-nyu-green hover:text-nyu-green-dark transition-colors">
+                        {{ app_email }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html> 

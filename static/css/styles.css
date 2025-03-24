@@ -1,0 +1,213 @@
+/* NYU Colors */
+:root {
+    --nyu-purple: #57068C;
+    --nyu-violet: #8A2BE2;
+    --nyu-green: #00A86B;
+    --nyu-green-dark: #008F5B;
+}
+
+/* Tailwind Extensions */
+.from-nyu-purple {
+    --tw-gradient-from: #57068C;
+}
+
+.to-nyu-violet {
+    --tw-gradient-to: #8A2BE2;
+}
+
+.bg-nyu-purple {
+    background-color: #57068C;
+}
+
+.bg-nyu-violet {
+    background-color: #8A2BE2;
+}
+
+.bg-nyu-green {
+    background-color: #00A86B;
+}
+
+.bg-nyu-green-dark {
+    background-color: #008F5B;
+}
+
+.text-nyu-purple {
+    color: #57068C;
+}
+
+.text-nyu-violet {
+    color: #8A2BE2;
+}
+
+.text-nyu-green {
+    color: #00A86B;
+}
+
+.hover\:bg-nyu-violet:hover {
+    background-color: #8A2BE2;
+}
+
+.hover\:bg-nyu-green-dark:hover {
+    background-color: #008F5B;
+}
+
+.hover\:text-nyu-green:hover {
+    color: #00A86B;
+}
+
+/* Hero Background */
+.hero-bg {
+    background: linear-gradient(rgba(87, 6, 140, 0.9), rgba(138, 43, 226, 0.9)),
+                url('/static/images/nyu-background.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.feature-card {
+    border-left: 4px solid #57068C;
+}
+
+.future-option-tech {
+    border-left: 4px solid #57068C;
+}
+
+.future-option-internal {
+    border-left: 4px solid #00A86B;
+}
+
+.interest-counter {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.interest-counter span {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.hero-content {
+    position: relative;
+    padding-top: 4rem;
+}
+
+.interest-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.email-input {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#interestButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#emailSection {
+    transition: all 0.3s ease-in-out;
+}
+
+#emailSection.hidden {
+    display: none;
+    opacity: 0;
+}
+
+#emailSection:not(.hidden) {
+    display: block;
+    opacity: 1;
+}
+
+#subscribeMessage {
+    transition: all 0.3s ease-in-out;
+}
+
+#subscribeMessage.hidden {
+    display: none;
+    opacity: 0;
+}
+
+#subscribeMessage:not(.hidden) {
+    display: block;
+    opacity: 1;
+}
+
+/* Admin Dashboard Styles */
+.admin-stats-card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(87, 6, 140, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.admin-stats-card:hover {
+    border-color: rgba(87, 6, 140, 0.4);
+    box-shadow: 0 4px 6px rgba(87, 6, 140, 0.1);
+}
+
+.admin-stats-value {
+    color: #57068C;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.admin-stats-label {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.admin-recent-list {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(87, 6, 140, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.admin-recent-list:hover {
+    border-color: rgba(87, 6, 140, 0.4);
+    box-shadow: 0 4px 6px rgba(87, 6, 140, 0.1);
+}
+
+.admin-recent-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(87, 6, 140, 0.1);
+}
+
+.admin-recent-item:last-child {
+    border-bottom: none;
+}
+
+.admin-recent-value {
+    color: #57068C;
+    font-weight: 500;
+}
+
+.admin-recent-timestamp {
+    color: #666;
+    font-size: 0.875rem;
+} 
