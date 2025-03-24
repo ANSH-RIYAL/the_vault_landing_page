@@ -150,7 +150,12 @@ async function fetchSP500Data() {
 let ws = null;
 
 function connectWebSocket() {
-    ws = new WebSocket(`ws://${window.location.host}/ws/interest`);
+    // Use wss:// for HTTPS and ws:// for HTTP
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/interest`;
+    console.log('Connecting to WebSocket:', wsUrl);
+    
+    ws = new WebSocket(wsUrl);
     
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
