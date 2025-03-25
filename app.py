@@ -10,7 +10,7 @@ import time
 import sqlite3
 import os
 import shutil
-from typing import List
+from typing import List, Any
 from config import (
     ALPACA_API_KEY,
     ALPACA_API_SECRET,
@@ -68,12 +68,19 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Mount static files with custom response class
 class SecureStaticFiles(StaticFiles):
-    async def file_response(self, *args, **kwargs):
-        response = await super().file_response(*args, **kwargs)
+    async def file_response(self, scope, receive, send, file_path, stat_result):
+        response = await super().file_response(scope, receive, send, file_path, stat_result)
         response.headers["Cache-Control"] = "public, max-age=31536000"
         return response
 
-# Mount static files
+# Override url_for to always return HTTPS URLs for static files
+def url_for(request: Request, name: str, **path_params: Any) -> str:
+    url = request.url_for(name, **path_params)
+    if name.startswith("static"):
+        return url.replace("http://", "https://")
+    return url
+
+# Mount static files with custom response class
 app.mount("/static", SecureStaticFiles(directory="static"), name="static")
 
 # Templates with secure URLs
