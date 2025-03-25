@@ -27,6 +27,7 @@ import aiohttp
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 # Load environment variables
 load_dotenv()
@@ -77,7 +78,12 @@ app.mount("/static", SecureStaticFiles(directory="static"), name="static")
 
 # Templates with secure URLs
 templates = Jinja2Templates(directory="templates")
-templates.env.globals["url_for"] = lambda name, path: f"/static{path}"
+
+# Override url_for to always use HTTPS
+def url_for(name: str, path: str, _scheme: str = "https") -> str:
+    return f"https://the-vault-production.up.railway.app{path}"
+
+templates.env.globals["url_for"] = url_for
 
 # WebSocket connections
 active_connections: List[WebSocket] = []
