@@ -4,40 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - NYU Collective Auto Investment</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
 </head>
-<body>
-    <div class="container">
-        <header class="admin-header">
-            <h1>Admin Dashboard</h1>
-            <a href="/" class="back-link">Back to Home</a>
+<body class="bg-gradient-to-br from-nyu-purple to-nyu-violet min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="glass-effect rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-nyu-purple">Admin Dashboard</h1>
+                <a href="/" class="text-nyu-purple hover:text-nyu-violet transition-colors">Back to Home</a>
+            </div>
         </header>
 
-        <main class="admin-content">
-            <section class="admin-stats">
-                <div class="admin-stats-card">
-                    <h2>Total Interest</h2>
-                    <div class="admin-stats-value" id="totalInterest">Loading...</div>
+        <main class="space-y-8">
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-effect rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-nyu-purple mb-4">Total Interest</h2>
+                    <div class="text-3xl font-bold text-nyu-green" id="totalInterest">Loading...</div>
                 </div>
-                <div class="admin-stats-card">
-                    <h2>Total Subscribers</h2>
-                    <div class="admin-stats-value" id="totalSubscribers">Loading...</div>
-                </div>
-            </section>
-
-            <section class="admin-recent">
-                <div class="admin-recent-list">
-                    <h2>Recent Interest</h2>
-                    <div id="recentInterest">Loading...</div>
-                </div>
-                <div class="admin-recent-list">
-                    <h2>Recent Subscribers</h2>
-                    <div id="recentSubscribers">Loading...</div>
+                <div class="glass-effect rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-nyu-purple mb-4">Total Subscribers</h2>
+                    <div class="text-3xl font-bold text-nyu-green" id="totalSubscribers">Loading...</div>
                 </div>
             </section>
 
-            <div class="admin-actions">
-                <button id="downloadCSVBtn" class="admin-button">Download Statistics</button>
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-effect rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-nyu-purple mb-4">Recent Interest</h2>
+                    <div class="space-y-3" id="recentInterest">Loading...</div>
+                </div>
+                <div class="glass-effect rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-nyu-purple mb-4">Recent Subscribers</h2>
+                    <div class="space-y-3" id="recentSubscribers">Loading...</div>
+                </div>
+            </section>
+
+            <div class="flex justify-center">
+                <button id="downloadCSVBtn" class="bg-nyu-purple hover:bg-nyu-violet text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg">
+                    Download Statistics
+                </button>
             </div>
         </main>
     </div>

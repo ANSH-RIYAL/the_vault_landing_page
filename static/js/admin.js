@@ -25,26 +25,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update recent interest
             const recentInterestHtml = data.recent_interest.map(item => `
-                <div class="admin-recent-item">
-                    <span class="admin-recent-value">Interest recorded</span>
-                    <span class="admin-recent-timestamp">${formatDate(item.timestamp)}</span>
+                <div class="glass-effect rounded-lg p-3 flex justify-between items-center">
+                    <span class="text-nyu-purple">Interest recorded</span>
+                    <span class="text-gray-600 text-sm">${formatDate(item.timestamp)}</span>
                 </div>
             `).join('');
-            document.getElementById('recentInterest').innerHTML = recentInterestHtml;
+            document.getElementById('recentInterest').innerHTML = recentInterestHtml || 'No recent interest';
             
             // Update recent subscribers
             const recentSubscribersHtml = data.recent_subscribers.map(item => `
-                <div class="admin-recent-item">
-                    <span class="admin-recent-value">${item.email}</span>
-                    <span class="admin-recent-timestamp">${formatDate(item.timestamp)}</span>
+                <div class="glass-effect rounded-lg p-3 flex justify-between items-center">
+                    <span class="text-nyu-purple">${item.email}</span>
+                    <span class="text-gray-600 text-sm">${formatDate(item.timestamp)}</span>
                 </div>
             `).join('');
-            document.getElementById('recentSubscribers').innerHTML = recentSubscribersHtml;
+            document.getElementById('recentSubscribers').innerHTML = recentSubscribersHtml || 'No recent subscribers';
         })
         .catch(error => {
             console.error('Error fetching admin stats:', error);
-            document.getElementById('totalInterest').textContent = 'Error loading data';
-            document.getElementById('totalSubscribers').textContent = 'Error loading data';
+            document.getElementById('totalInterest').textContent = 'Error';
+            document.getElementById('totalSubscribers').textContent = 'Error';
             document.getElementById('recentInterest').innerHTML = 'Error loading data';
             document.getElementById('recentSubscribers').innerHTML = 'Error loading data';
         });
@@ -62,7 +62,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Utility functions
 function formatDate(timestamp) {
-    return new Date(timestamp).toLocaleString();
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 // Export CSV
@@ -136,7 +144,7 @@ async function downloadDatabaseCSV(password) {
         document.body.removeChild(a);
     } catch (error) {
         console.error('Error downloading CSV:', error);
-        alert('Failed to download CSV file');
+        alert('Failed to download CSV file. Please try again.');
     }
 }
 
