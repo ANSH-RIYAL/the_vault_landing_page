@@ -33,14 +33,11 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Get environment variables
-ALPACA_API_KEY = os.getenv('ALPACA_API_KEY')
-ALPACA_API_SECRET = os.getenv('ALPACA_API_SECRET')
-ALPACA_BASE_URL = os.getenv('ALPACA_BASE_URL')
+# Get admin password from environment
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
-if not all([ALPACA_API_KEY, ALPACA_API_SECRET, ALPACA_BASE_URL, ADMIN_PASSWORD]):
-    raise ValueError("Missing required environment variables")
+if not ADMIN_PASSWORD:
+    raise ValueError("Missing required environment variable: ADMIN_PASSWORD")
 
 app = FastAPI(title=APP_NAME, description=APP_DESCRIPTION)
 
