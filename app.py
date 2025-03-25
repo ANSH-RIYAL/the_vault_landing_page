@@ -25,6 +25,8 @@ import io
 import asyncio
 import aiohttp
 import logging
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 # Load environment variables
 load_dotenv()
@@ -41,11 +43,41 @@ if not ADMIN_PASSWORD:
 
 app = FastAPI(title=APP_NAME, description=APP_DESCRIPTION)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# CORS configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Templates
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "upgrade-insecure-requests"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Mount static files with custom response class
+class SecureStaticFiles(StaticFiles):
+    async def file_response(self, *args, **kwargs):
+        response = await super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "public, max-age=31536000"
+        return response
+
+# Mount static files
+app.mount("/static", SecureStaticFiles(directory="static"), name="static")
+
+# Templates with secure URLs
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["url_for"] = lambda name, path: f"/static{path}"
 
 # WebSocket connections
 active_connections: List[WebSocket] = []
